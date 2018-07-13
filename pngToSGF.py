@@ -13,11 +13,17 @@ import random
 
 np.set_printoptions(threshold=np.nan)
 GRAY_THRES = 190
-BLACK_THRES = 50
+BLACK_THRES = 10
+WHITE_THRES = 255 - BLACK_THRES
 MAX_IMG = 861
 RED = (0,0,200)
 BLUE = (200,0,0)
 GREEN = (0,200,0)
+
+BLACK_CHAR = "b"
+WHITE_CHAR = "w"
+EMPTY_CHAR = "."
+
 
 def getFname(index):
 	prefix = "tsumego/tsumego"
@@ -33,6 +39,8 @@ def read(index):
 	# Use 0 for grayscale
 
 def show(img, fname=""):
+	if type(fname) == type(0):
+		fname = getFname(fname)
 	if type(img) == type([]):
 		for (x,f) in zip(img, fname):
 			cv2.imshow(f, x)
@@ -125,7 +133,7 @@ def _test_circleFunc(indices, func, **kwargs):
 	circles = [func(img, **kwargs) for img in imgs]
 	drawn = [drawCircles(img, circ) for (img, circ) in zip(imgs, circles)]
 	for (pic,i) in zip(drawn,indices):
-		show(pic, getFname(i))
+		show(pic, i)
 
 def getTopRightCoord(img):
 	img = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
@@ -157,18 +165,56 @@ def getGrid(img, blackStones):
 	show(img)
 
 
-def colorAtCoords(img, coords):
-	pass
+def colorAtCoords(img, coords, gridLen):
+	# Returns _ for no_stone, b for black, w for white
+	patchRadius = gridLen/4.0
+	h,w,_ = img.shape
+	(y,x) = coords
+	if y >= h or x >= w:
+		return EMPTY_CHAR
+	avgFill = findAvgFill(img, np.array([x, y, patchRadius]))
+	if avgFill < BLACK_THRES:
+		return BLACK_CHAR
+	elif avgFill > WHITE_THRES:
+		return WHITE_CHAR
+	else:
+		return EMPTY_CHAR
 
+def getImageCoords(topleft, gridLen):
+	(Y,X) = topleft
+	coords = [(int(Y + i*gridLen), int(X + j*gridLen)) \
+				for j in range(19) \
+				for i in range(19)]
+	return coords
+
+def predictStones(img, drawStones=True):
+	blackStones = findBlackStones(img)
+	topLeft, gridLen = getGrid(img, blackStones)
+	imgCoords = getImageCoords(topLeft, gridLen)	
+	predicted = "".join([colorAtCoords(img, c, gridLen) for c in imgCoords])
+	if not drawStones:
+		return predicted, img
+
+	for (p,c) in zip(predicted, imgCoords):
+		color = GREEN
+		if p == EMPTY_CHAR:
+			continue
+		if p == BLACK_CHAR:
+			color = BLUE
+		if p == WHITE_CHAR:
+			color = RED
+		cv2.circle(img, (c[1], c[0]), 2, color)
+	return predicted, img
+
+def _test_predictStones(indices):
+	imgs, indices = generateImages(indices)
+	for (img,i) in zip(imgs,indices):
+		predicted, drawn = predictStones(img)
+		show(drawn, i)
 
 if __name__ == "__main__":
-	indices = 20
-	imgs, indices = generateImages(indices)
-	for img in imgs:
-		blackStones = findBlackStones(img)
-		getGrid(img, blackStones)
-
-
+	indices = 10
+	_test_predictStones(indices)
 
 	sys.exit(1)
 	indices = [853, 596, 506, 399]
