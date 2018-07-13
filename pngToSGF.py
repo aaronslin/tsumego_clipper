@@ -6,7 +6,6 @@ Strategy:
  	it's empty, black, or white.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import sys
@@ -15,6 +14,9 @@ import random
 np.set_printoptions(threshold=np.nan)
 GRAY_THRES = 190
 MAX_IMG = 861
+RED = (0,0,200)
+BLUE = (200,0,0)
+GREEN = (0,200,0)
 
 def getFname(index):
 	prefix = "tsumego/tsumego"
@@ -64,7 +66,7 @@ def findBlackStones(img):
 	avgFill = [findAvgFill(img, circ) for circ in circles]
 	return np.array([circ for (circ, fill) in zip(circles, avgFill) if fill < GRAY_THRES])
 
-def drawCircles(img, circles, color=(0,0,200)):
+def drawCircles(img, circles, color=RED):
 	if circles is None:
 		assert("Error in drawCircles(): circles is None")
 	elif type(circles) is not type(np.array([])):
@@ -80,6 +82,32 @@ def drawCircles(img, circles, color=(0,0,200)):
 			cv2.circle(img, center, radius, color)
 	return img
 
+def intersectCircles(C1, C2, distThres):
+	# dist: The maximum allowable distance between two centers to count as the same circle
+	def circDist(c1, c2):
+		# Distance between the centers
+		dist = np.linalg.norm(c1[0:2]-c2[0:2])
+		return dist
+	
+	# Definitely has room for optimization
+	minDist = [min([circDist(c1, c2) for c2 in C2]) for c1 in C1]
+	intersect = np.array([c1 for (c1, d) in zip(C1, minDist) if d < distThres])
+	return intersect
+
+def findWhiteStones(img):
+	loParam = 10
+	hiParam = 15.5
+	loCircles = findCircles(img, param2=loParam)[0]
+	hiCircles = findCircles(img, param2=hiParam)[0]
+	
+	loAvgFill = [findAvgFill(img, circ) for circ in loCircles]
+	loWhiteCircles = np.array([circ for (circ, fill) in zip(loCircles, loAvgFill) if fill > GRAY_THRES])
+
+	# Within half a radius
+	distThres = (img.shape[1])/(36. * 2)	
+	intersect = intersectCircles(loWhiteCircles, hiCircles, distThres)
+	return intersect
+
 def generateImages(indices):
 	# indices (int): generates (indices) random tsumego
 	# indices (list): uses (indices) as the tsumego to look at
@@ -88,20 +116,28 @@ def generateImages(indices):
 	imgs = [read(i) for i in indices]
 	return imgs, indices
 
-def _test_findCircleFunc(indices, func, **kwargs):
+def _test_circleFunc(indices, func, **kwargs):
+	print("Testing", func.__name__, ":", indices)
 	imgs, indices = generateImages(indices)
-	blackStones = [func(img, **kwargs) for img in imgs]
-	drawn = [drawCircles(img, circ) for (img, circ) in zip(imgs, blackStones)]
+	print(kwargs)
+	circles = [func(img, **kwargs) for img in imgs]
+	drawn = [drawCircles(img, circ) for (img, circ) in zip(imgs, circles)]
 	for (pic,i) in zip(drawn,indices):
 		show(pic, getFname(i))
-	print("Tested", func.__name__, ":" indices)
 
 if __name__ == "__main__":
 	fname = getFname(24)
-	
-	indices = [371, 601, 317, 451, 95]
+
+	indices = [853, 596, 506, 399]
 	indices = 20
-	_test_findCircleFunc(indices, findBlackStones)
+	_test_circleFunc(indices, findCircles, param2=16.9)
+	#indices = 20
+	#_test_circleFunc(indices, findWhiteStones)
+
+#	# Test findBlackStones
+#	failedBlackIndices = [371, 601, 317, 451, 95]
+#	indices = 20
+#	_test_circleFunc(failedBlackIndices, findBlackStones)
 
 	sys.exit(1)
 
@@ -110,6 +146,17 @@ if __name__ == "__main__":
 	If > 15.5, then it'll miss black stones. If < 15.5, then it'll have false positives.
 	Strategy: check once for two different param values. If the interior is mostly black,
 		Then, pass it off. Otherwise, it better show up for both param values.
+
+7/12/18: findWhiteStones works with 95% accuracy.
+	If param2 = 16.9, then there won't be any false positives.
+	Unfortunately, there are white stones that will be missed because of the sharp threshold at 15.5.
+	
+	Strategy: Find the grid, given some confident stone locations. 
+		Top right corner is always empty (maybe not in other packets though)
+			Compute by finding min distance from top right of image.
+			Update: looks like this is true for all three Cho Chikun packets
+		Estimate the grid by using the radius of the stones
+		Once given grid points, check whether there is a cross inside. 
 """
 
 
