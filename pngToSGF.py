@@ -183,8 +183,8 @@ def colorAtCoords(img, coords, gridLen):
 def getImageCoords(topleft, gridLen):
 	(Y,X) = topleft
 	coords = [(int(Y + i*gridLen), int(X + j*gridLen)) \
-				for j in range(19) \
-				for i in range(19)]
+				for i in range(19) \
+				for j in range(19)]
 	return coords
 
 def predictStones(i):
@@ -194,7 +194,7 @@ def predictStones(i):
 def predictStonesByImg(img, drawStones=True):
 	blackStones = findBlackStones(img)
 	topLeft, gridLen = getGrid(img, blackStones)
-	imgCoords = getImageCoords(topLeft, gridLen)	
+	imgCoords = getImageCoords(topLeft, gridLen)
 	predicted = "".join([colorAtCoords(img, c, gridLen) for c in imgCoords])
 	if not drawStones:
 		return predicted
@@ -214,10 +214,11 @@ def _test_predictStones(indices):
 	imgs, indices = generateImages(indices)
 	for (img,i) in zip(imgs,indices):
 		predicted, drawn = predictStonesByImg(img)
+		print("Predicted:", predicted)
 		show(drawn, i)
 
 if __name__ == "__main__":
-	indices = 50
+	indices = 1
 	_test_predictStones(indices)
 
 
