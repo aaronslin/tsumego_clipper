@@ -140,6 +140,8 @@ function randomizeOrientation(sgf) {
 	return sgf
 }
 
+
+
 sgf = ".....wwb...........wwb.w.wb...........bbwwwwb..............bbbbb.............b..........................................................................................................................................................................................................................................................................................."
 
 
@@ -154,8 +156,32 @@ var board = new WGo.Board(document.getElementById("board"), {
     width: 600,
 	section: getSection(parsed, 0)
 });
-
+board.lastShadow = null
 board.addObject(pos)
+
+
+
+board.addEventListener("mousemove", function(x,y) {
+	if (x<0 || y<0) {
+		return;
+	}
+	if (board.lastShadow !== null) {
+		board.removeObject(board.lastShadow)
+		board.lastShadow = null
+	}
+	state = board.getState()["objects"][x][y]
+	if (Array.isArray(state) && state.length == 0) {
+		board.lastShadow = {
+			x: x,
+			y: y,
+			type: "outline",
+			color: colorMap[TO_PLAY]
+		};
+		board.addObject(board.lastShadow)
+	}
+});
+
+
 
 
 
