@@ -187,13 +187,17 @@ def getImageCoords(topleft, gridLen):
 				for i in range(19)]
 	return coords
 
-def predictStones(img, drawStones=True):
+def predictStones(i):
+	img = read(i)
+	return predictStonesByImg(i, False)
+
+def predictStonesByImg(img, drawStones=True):
 	blackStones = findBlackStones(img)
 	topLeft, gridLen = getGrid(img, blackStones)
 	imgCoords = getImageCoords(topLeft, gridLen)	
 	predicted = "".join([colorAtCoords(img, c, gridLen) for c in imgCoords])
 	if not drawStones:
-		return predicted, img
+		return predicted
 
 	for (p,c) in zip(predicted, imgCoords):
 		color = GREEN
@@ -209,26 +213,13 @@ def predictStones(img, drawStones=True):
 def _test_predictStones(indices):
 	imgs, indices = generateImages(indices)
 	for (img,i) in zip(imgs,indices):
-		predicted, drawn = predictStones(img)
+		predicted, drawn = predictStonesByImg(img)
 		show(drawn, i)
 
 if __name__ == "__main__":
-	indices = 10
+	indices = 50
 	_test_predictStones(indices)
 
-	sys.exit(1)
-	indices = [853, 596, 506, 399]
-	indices = 20
-	_test_circleFunc(indices, findCircles, param2=17)
-	#indices = 20
-	#_test_circleFunc(indices, findWhiteStones)
-
-#	# Test findBlackStones
-#	failedBlackIndices = [371, 601, 317, 451, 95]
-#	indices = 20
-#	_test_circleFunc(failedBlackIndices, findBlackStones)
-
-	sys.exit(1)
 
 """
 7/11/18: findCircles works. param2 needs tuning.
@@ -246,6 +237,11 @@ if __name__ == "__main__":
 			Update: looks like this is true for all three Cho Chikun packets
 		Estimate the grid by using the radius of the stones
 		Once given grid points, check whether there is a cross inside. 
+
+7/12/18: predictStones() is the main function to use:
+	returns a length 361 string with {., b, w} that can be parsed to become an SGF
+	Todo next: parse the string -> SGF and then find a JS library for displaying SGF on a browser.
+
 """
 
 
