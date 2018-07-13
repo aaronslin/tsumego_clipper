@@ -189,7 +189,7 @@ def getImageCoords(topleft, gridLen):
 
 def predictStones(i):
 	img = read(i)
-	return predictStonesByImg(i, False)
+	return predictStonesByImg(img, False)
 
 def predictStonesByImg(img, drawStones=True):
 	blackStones = findBlackStones(img)
