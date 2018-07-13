@@ -13,6 +13,7 @@ import random
 
 np.set_printoptions(threshold=np.nan)
 GRAY_THRES = 190
+BLACK_THRES = 50
 MAX_IMG = 861
 RED = (0,0,200)
 BLUE = (200,0,0)
@@ -94,9 +95,10 @@ def intersectCircles(C1, C2, distThres):
 	intersect = np.array([c1 for (c1, d) in zip(C1, minDist) if d < distThres])
 	return intersect
 
-def findWhiteStones(img):
+def findWhiteStones_safe(img):
+	# Safe because it misses some white stones
 	loParam = 10
-	hiParam = 15.5
+	hiParam = 16.9
 	loCircles = findCircles(img, param2=loParam)[0]
 	hiCircles = findCircles(img, param2=hiParam)[0]
 	
@@ -125,12 +127,53 @@ def _test_circleFunc(indices, func, **kwargs):
 	for (pic,i) in zip(drawn,indices):
 		show(pic, getFname(i))
 
-if __name__ == "__main__":
-	fname = getFname(24)
+def getTopRightCoord(img):
+	img = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+	h,w = img.shape
+	for x in range(w-1, -1, -1):
+		for y in range(0, h, 1):
+			if img[y][x] < BLACK_THRES:
+				return (y,x)
 
+def getGrid(img, blackStones):
+	# Assumes that top right corner is empty
+	(topY, rightX) = getTopRightCoord(img)
+	# Assumes that the stone diam ~= grid length
+	avgRad = np.mean(blackStones, axis=0)[2] 	
+	leftmostBlack = min(blackStones, key=lambda x: x[0])
+	hasFirstColStone = np.round(leftmostBlack[0]/avgRad) % 2 == 1
+	# Assumes that the image is cropped to have 0 margin
+	leftX = int(np.round(hasFirstColStone * avgRad))
+	gridLen = (rightX - leftX)/18.0
+	
+	return (topY, leftX), gridLen
+
+	# For testing purposes:
+	for i in range(19):
+		for j in range(19):
+			x = int(leftX + i*gridLen)
+			y = int(topY + j*gridLen)
+			cv2.circle(img,(x,y), 2, GREEN)
+	show(img)
+
+
+def colorAtCoords(img, coords):
+	pass
+
+
+if __name__ == "__main__":
+	indices = 20
+	imgs, indices = generateImages(indices)
+	for img in imgs:
+		blackStones = findBlackStones(img)
+		getGrid(img, blackStones)
+
+
+
+	sys.exit(1)
 	indices = [853, 596, 506, 399]
 	indices = 20
-	_test_circleFunc(indices, findCircles, param2=16.9)
+	_test_circleFunc(indices, findCircles, param2=17)
 	#indices = 20
 	#_test_circleFunc(indices, findWhiteStones)
 
