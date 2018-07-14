@@ -157,9 +157,30 @@ var board = new WGo.Board(document.getElementById("board"), {
 	section: getSection(parsed, 0)
 });
 board.lastShadow = null
+board.toplay = colorMap[BLACK_CHAR]
 board.addObject(pos)
+board.toggleToPlay = function() {
+	board.toplay = WGo.B + WGo.W - board.toplay;
+}
+board.hasStone = function(x,y) {
+	console.log(board.obj_arr[x][y])
+	state = board.getState()["objects"][x][y]
+	noStone = (Array.isArray(state) && state.length == 0)
+	console.log("aoeu:", !noStone, state)
+	return !noStone
+}
+console.log(colorMap, board.toplay)
 
 
+board.addEventListener("click", function(x,y) {
+	// BUG: since mousehover -> there is a shadowStone at (x,y), board.hasStone() returns the wrong result.
+	console.log(board.hasStone(x,y), x, y);
+	if(!board.hasStone(x,y)) {
+		stone = {x: x, y: y, c: board.toplay}
+		board.addObject(stone)
+		board.toggleToPlay()
+	}
+});
 
 board.addEventListener("mousemove", function(x,y) {
 	if (x<0 || y<0) {
@@ -169,19 +190,20 @@ board.addEventListener("mousemove", function(x,y) {
 		board.removeObject(board.lastShadow)
 		board.lastShadow = null
 	}
-	state = board.getState()["objects"][x][y]
-	if (Array.isArray(state) && state.length == 0) {
+	if (!board.hasStone(x,y)) {
 		board.lastShadow = {
 			x: x,
 			y: y,
 			type: "outline",
-			color: colorMap[TO_PLAY]
+			c: board.toplay
 		};
 		board.addObject(board.lastShadow)
 	}
 });
 
-
+// NEXT STEPS: fix the bug in board.addEventListener("click", ...) to enable adding stones.
+// 				mechanic: adding a stone should capture a group if it can (read the API)
+// 				embed this into the appropriate newTab page
 
 
 
