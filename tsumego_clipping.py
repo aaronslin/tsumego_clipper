@@ -10,12 +10,15 @@ import matplotlib.pyplot as plt
 import os
 
 pdfname = "cho-2-intermediate-mobile.pdf"
+pageFolder = "pages/"
+puzzFolder = "tsumego/"
+
 def pdfToPages(pdfname):
 	from pdf2image import convert_from_path
 
 	pages = convert_from_path(pdfname)
 	for (n,page) in enumerate(pages):
-		fname = "pages/page"+str(n)+".png"
+		fname = os.path.join(pageFolder,"page",str(n),".png")
 		page.save(fname, "PNG")
 
 def rgb2gray(img):
@@ -63,7 +66,7 @@ def saveImgs(imgs, index=1, suffix=".png"):
 	for x in imgs:
 		if len(x) == 1:
 			puzzle = x[0].T
-			fname = "tsumego/tsumego" + str(index) + suffix
+			fname = os.path.join(puzzFolder, "tsumego", str(index), suffix)
 			misc.imsave(fname, puzzle)
 			index += 1
 		else:
@@ -73,14 +76,13 @@ def saveImgs(imgs, index=1, suffix=".png"):
 	return index
 
 if __name__ == "__main__":
-	pagesDir = "pages/"
 	suffix = ".png"
-	pages = [f for f in os.listdir(pagesDir) if suffix in f]
+	pages = [f for f in os.listdir(pageFolder) if suffix in f]
 	pages = sorted(pages, key=lambda x: int(x.strip("page.png")))
 	
 	index = 1
 	for p in pages:
-		imgs = splitPage(os.path.join(pagesDir, p))
+		imgs = splitPage(os.path.join(pageFolder, p))
 		index = saveImgs(imgs, index, suffix)
 		print ("Next puzzle:", index)
 
