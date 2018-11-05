@@ -1,0 +1,10 @@
+{
+  "chrome_url_overrides" : {
+    "newtab": "tsumego.html"
+  },
+  "name": "Cho Chikun Tsumego",
+  "permissions": [
+    "storage"
+  ],
+  "version": "0.0"
+}
